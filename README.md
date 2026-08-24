@@ -1,97 +1,257 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🌍 TravelMate
 
-# Getting Started
+TravelMate is an all-in-one travel companion mobile application built using **React Native** and **FastAPI**. It helps users check real-time weather, explore maps, calculate the shortest driving route, view distance and estimated travel time, and start live navigation using Google Maps.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## ✨ Features
 
-## Step 1: Start Metro
+- User Login and Signup
+- Current GPS location detection
+- Search destinations by name
+- Select a destination by tapping the map
+- Display current and destination markers
+- Calculate the shortest driving route
+- Show route distance and estimated time
+- Draw a road-following route on the map
+- Start live navigation in Google Maps
+- Voice-guided navigation and automatic rerouting
+- Real-time local weather
+- Temperature and feels-like temperature
+- Humidity, wind speed and rain probability
+- Five-day weather forecast
+- Loading, permission and network error handling
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 🚧 Upcoming Features
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- Nearby cafes and restaurants
+- Ride-booking integration
+- Hotel discovery and booking
+- AI-based itinerary planner
+- Saved destinations
+- Travel history
+- User profile and preferences
+- Emergency contacts and safety features
 
-```sh
-# Using npm
+## 🛠️ Tech Stack
+
+### Mobile Application
+
+- React Native CLI
+- JavaScript and JSX
+- React Navigation
+- React Native Maps
+- React Native Community Geolocation
+- React Native Safe Area Context
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- HTTPX
+
+### APIs and Services
+
+- **OpenStreetMap Nominatim** – Geocoding and reverse geocoding
+- **OSRM** – Shortest driving-route calculation
+- **Open-Meteo** – Current weather and five-day forecast
+- **Google Maps** – Live navigation, traffic and voice guidance
+
+## 📁 Project Structure
+
+```text
+TravelMate/
+├── android/
+├── ios/
+├── src/
+│   ├── navigation/
+│   └── screens/
+│       ├── LoginScreen.jsx
+│       ├── SignupScreen.jsx
+│       ├── HomeScreen.jsx
+│       ├── MapScreen.jsx
+│       ├── WeatherScreen.jsx
+│       ├── CafesScreen.jsx
+│       ├── RideScreen.jsx
+│       └── ProfileScreen.jsx
+├── backend/
+│   └── main.py
+├── App.jsx
+├── package.json
+└── README.md
+```
+
+## ⚙️ Installation and Setup
+
+### Prerequisites
+
+Make sure the following tools are installed:
+
+- Node.js
+- npm
+- Java Development Kit 17
+- Android Studio
+- Android SDK
+- Python 3.10 or later
+- Git
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/archita-garg02/travelling-app.git
+cd travelling-app
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start Metro
+
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+### 4. Run the Android Application
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Open another terminal:
 
-### Android
-
-```sh
-# Using npm
+```bash
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+Make sure an Android emulator is running or a physical device is connected with USB debugging enabled.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## 🖥️ Backend Setup
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+Move into the backend folder:
 
-```sh
-bundle install
+```bash
+cd backend
 ```
 
-Then, and every time you update your native dependencies, run:
+Create a virtual environment:
 
-```sh
-bundle exec pod install
+```bash
+python -m venv venv
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Activate it in Windows PowerShell:
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```powershell
+.\venv\Scripts\Activate.ps1
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Install the dependencies:
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```bash
+pip install fastapi uvicorn httpx
+```
 
-## Step 3: Modify your app
+Start the FastAPI server:
 
-Now that you have successfully run the app, let's make changes!
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Open the API documentation:
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+```text
+http://127.0.0.1:8000/docs
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## 📱 Backend URL Configuration
 
-## Congratulations! :tada:
+For the Android emulator, use:
 
-You've successfully run and modified your React Native App. :partying_face:
+```javascript
+const API_BASE_URL = 'http://10.0.2.2:8000';
+```
 
-### Now what?
+For a physical Android device, use your computer’s local IP address:
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+```javascript
+const API_BASE_URL = 'http://192.168.1.5:8000';
+```
 
-# Troubleshooting
+The phone and computer must be connected to the same Wi-Fi network.
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## 📍 Location Permission
 
-# Learn More
+Add the following permission inside:
 
-To learn more about React Native, take a look at the following resources:
+```text
+android/app/src/main/AndroidManifest.xml
+```
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Place it before the `<application>` element:
+
+```xml
+<uses-permission
+    android:name="android.permission.ACCESS_FINE_LOCATION" />
+```
+
+## 🔗 Backend Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Check backend status |
+| `GET` | `/geocode` | Convert a destination into coordinates |
+| `GET` | `/reverse-geocode` | Convert coordinates into an address |
+| `GET` | `/route` | Calculate route, distance and duration |
+
+## 🗺️ How the Map Feature Works
+
+1. TravelMate requests location permission.
+2. The device GPS provides the current coordinates.
+3. OpenStreetMap converts the coordinates into a readable address.
+4. The user searches for or selects a destination.
+5. FastAPI requests the shortest driving route from OSRM.
+6. TravelMate draws the route on the map.
+7. Distance and estimated travel time are displayed.
+8. The **Start Navigation** button opens Google Maps.
+9. Google Maps provides live traffic, voice guidance and rerouting.
+
+## 🌦️ How the Weather Feature Works
+
+1. TravelMate obtains the user’s GPS coordinates.
+2. It requests current weather data from Open-Meteo.
+3. It displays temperature, humidity, wind and rain probability.
+4. It also displays a five-day forecast.
+
+Open-Meteo does not require an API key.
+
+## 🚀 Future Improvements
+
+- Share location between screens using Context API
+- Add destination autocomplete
+- Add driving, walking and cycling route modes
+- Cache weather and route information
+- Add unit and integration tests
+- Add authentication and persistent user data
+- Add AI-based travel recommendations
+- Deploy the FastAPI backend
+
+## 👩‍💻 Author
+
+**Archita Garg**
+
+- GitHub: [archita-garg02](https://github.com/archita-garg02)
+
+## 🤝 Contributing
+
+Contributions and suggestions are welcome.
+
+```bash
+git checkout -b feature/your-feature-name
+git add .
+git commit -m "Add new feature"
+git push origin feature/your-feature-name
+```
+
+Then open a pull request on GitHub.
+
+---
+
+⭐ If you find TravelMate useful, consider giving the repository a star.
