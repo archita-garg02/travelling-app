@@ -1,6 +1,10 @@
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 
+from app.routers.auth import router as auth_router
+from app.routers.services import router as services_router
+from app.routers.bookings import router as bookings_router
+
 
 NOMINATIM_SEARCH_URL = (
     "https://nominatim.openstreetmap.org/search"
@@ -22,11 +26,16 @@ REQUEST_HEADERS = {
     "Accept-Language": "en",
 }
 
+
 app = FastAPI(
     title="TravelMate API",
     description="Backend services for the TravelMate application",
     version="1.0.0",
 )
+
+app.include_router(auth_router)
+app.include_router(services_router)
+app.include_router(bookings_router)
 
 
 @app.get("/")

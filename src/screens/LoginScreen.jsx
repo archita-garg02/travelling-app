@@ -1,19 +1,93 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
+  ActivityIndicator,
+  Alert,
   Image,
+  StyleSheet,
+  Text,
+  TextInput,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from
+  '@react-native-async-storage/async-storage';
+import {SafeAreaView} from
+  'react-native-safe-area-context';
 
-function LoginScreen({ navigation }) {
+
+const LOGIN_URL = 'http://10.0.2.2:8000/auth/login';
+
+
+function LoginScreen({navigation}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert(
+        'Missing information',
+        'Please enter your email and password.',
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(LOGIN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert(
+          'Login failed',
+          data.detail || 'Invalid email or password.',
+        );
+        return;
+      }
+
+      await AsyncStorage.setItem(
+        'accessToken',
+        data.access_token,
+      );
+
+      await AsyncStorage.setItem(
+        'user',
+        JSON.stringify(data.user),
+      );
+
+      Alert.alert(
+        'Login successful',
+        `Welcome, ${data.user.full_name}!`,
+      );
+
+      navigation.replace('HomeScreen');
+    } catch (error) {
+      console.log('Login error:', error);
+
+      Alert.alert(
+        'Connection error',
+        'Unable to connect to the TravelMate server.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <SafeAreaView style={styles.safeAreaView}>
-
-      {/* Top Image */}
       <View style={styles.logoContainer}>
         <Image
           source={require('../../assets/image.png')}
@@ -22,21 +96,17 @@ function LoginScreen({ navigation }) {
         />
       </View>
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.welcomeText}>
-          WELCOME UserName
+          WELCOME BACK
         </Text>
 
         <Text style={styles.subtitle}>
-          Sign in to Continue!
+          Sign in to continue!
         </Text>
       </View>
 
-      {/* Login Form */}
       <View style={styles.form}>
-
-        {/* Email */}
         <View style={styles.inputContainer}>
           <Image
             source={require('../../assets/gmail.png')}
@@ -46,12 +116,14 @@ function LoginScreen({ navigation }) {
           <TextInput
             placeholder="Enter your email"
             style={styles.input}
+            value={email}
+            onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
           />
         </View>
 
-        {/* Password */}
         <View style={styles.inputContainer}>
           <Image
             source={require('../../assets/lock.png')}
@@ -61,51 +133,53 @@ function LoginScreen({ navigation }) {
           <TextInput
             placeholder="Enter your password"
             style={styles.input}
+            value={password}
+            onChangeText={setPassword}
             secureTextEntry
           />
         </View>
 
-        {/* Forgot Password */}
-        <TouchableOpacity style={styles.forgotContainer}>
-          <Text style={styles.forgotText}>
-            Forgot Password?
-          </Text>
-        </TouchableOpacity>
-
-        {/* Login Button */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('HomeScreen')}
-          >
-            <Text style={styles.buttonText}>
-              Login
-            </Text>
+            style={[
+              styles.button,
+              loading && styles.disabledButton,
+            ]}
+            onPress={handleLogin}
+            disabled={loading}>
+
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>
+                Login
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Signup */}
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>
             Don't have an account?
           </Text>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('SignupScreen')}
-          >
+            onPress={() =>
+              navigation.navigate('SignupScreen')
+            }>
             <Text style={styles.signupButton}>
               Sign Up
             </Text>
           </TouchableOpacity>
         </View>
-
       </View>
-
     </SafeAreaView>
   );
 }
 
+
 export default LoginScreen;
+
 
 const styles = StyleSheet.create({
   safeAreaView: {
@@ -166,16 +240,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  forgotContainer: {
-    alignItems: 'center',
-    marginTop: 5,
-  },
-
-  forgotText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
   buttonContainer: {
     alignItems: 'center',
     marginTop: 20,
@@ -183,11 +247,15 @@ const styles = StyleSheet.create({
 
   button: {
     backgroundColor: '#000',
-    width: 300,
+    width: '100%',
     height: 55,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  disabledButton: {
+    opacity: 0.6,
   },
 
   buttonText: {

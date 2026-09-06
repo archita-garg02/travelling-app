@@ -16,6 +16,8 @@ import MapScreen from './src/screens/MapScreen';
 import CafesScreen from './src/screens/CafesScreen';
 import RideScreen from './src/screens/RideScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import AddServiceScreen from './src/screens/AddServiceScreen';
+import MyBookingsScreen from './src/screens/MyBookingsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -92,6 +94,20 @@ function StackNavigator() {
         name="RideScreen"
         component={RideScreen}
         options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="AddServiceScreen"
+        component={AddServiceScreen}
+        options={{
+          title: 'Add Vehicle Service',
+        }}
+      />
+
+      <Stack.Screen
+        name="MyBookingsScreen"
+        component={MyBookingsScreen}
+        options={{headerShown: false}}
       />
 
     </Stack.Navigator>
