@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from app.dependencies import get_current_user
+
 from app.core.security import (
     create_access_token,
     hash_password,
     verify_password,
 )
 from app.database import get_database
+from app.dependencies import get_current_user
 from app.models.user import User, UserRole
 from app.schemas.auth import (
     LoginResponse,
@@ -31,14 +33,24 @@ def register_user(
     user_data: UserRegister,
     database: Session = Depends(get_database),
 ):
-    existing_user = database.query(User).filter(
+    existing_email = database.query(User).filter(
         User.email == user_data.email
     ).first()
 
-    if existing_user:
+    if existing_email:
         raise HTTPException(
             status_code=400,
             detail="Email is already registered",
+        )
+
+    existing_phone = database.query(User).filter(
+        User.phone == user_data.phone
+    ).first()
+
+    if existing_phone:
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number is already registered",
         )
 
     new_user = User(
@@ -49,9 +61,17 @@ def register_user(
         role=UserRole(user_data.role.value),
     )
 
-    database.add(new_user)
-    database.commit()
-    database.refresh(new_user)
+    try:
+        database.add(new_user)
+        database.commit()
+        database.refresh(new_user)
+    except IntegrityError:
+        database.rollback()
+
+        raise HTTPException(
+            status_code=400,
+            detail="Email or phone number is already registered",
+        )
 
     return new_user
 
@@ -90,11 +110,12 @@ def login_user(
         "user": user,
     }
 
-    @router.get(
+
+@router.get(
     "/me",
     response_model=UserResponse,
-    )
-    def get_my_profile(
-        current_user: User = Depends(get_current_user),
-    ):
-        return current_user
+)
+def get_my_profile(
+    current_user: User = Depends(get_current_user),
+):
+    return current_user
