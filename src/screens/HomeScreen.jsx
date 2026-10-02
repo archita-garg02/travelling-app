@@ -1,190 +1,352 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TextInput,
+  ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-function HomeScreen({ navigation }) {
+const services = [
+  {
+    id: 'map',
+    title: 'Maps & Routes',
+    description: 'Search destinations and find routes',
+    icon: '🗺️',
+    screen: 'MapScreen',
+    backgroundColor: '#E8F3FF',
+  },
+  {
+    id: 'weather',
+    title: 'Weather',
+    description: 'Check weather for any destination',
+    icon: '🌤️',
+    screen: 'WeatherScreen',
+    backgroundColor: '#FFF4D8',
+  },
+  {
+    id: 'ride',
+    title: 'Book a Ride',
+    description: 'Find and book available vehicles',
+    icon: '🚕',
+    screen: 'RideScreen',
+    backgroundColor: '#FFEAE1',
+  },
+];
+
+
+function HomeScreen({navigation}) {
+  const openService = screen => {
+    navigation.navigate(screen);
+  };
+
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Hello! Username</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.subtitle}>Where do you want to go?</Text>
-      </View>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>
+              Welcome to
+            </Text>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Image
-          source={require('../../assets/search.png')}
-          style={styles.searchIcon}
-        />
+            <Text style={styles.appName}>
+              TravelMate
+            </Text>
+          </View>
 
-        <TextInput
-          placeholder="Search Destination"
-          style={styles.searchInput}
-        />
-      </View>
+          <View style={styles.profileCircle}>
+            <Text style={styles.profileText}>
+              T
+            </Text>
+          </View>
+        </View>
 
-      {/* Facilities */}
-      <View style={styles.facilitiesContainer}>
-        {/* Weather */}
-        <TouchableOpacity
-          style={styles.facility}
-          onPress={() => navigation.navigate('WeatherScreen')}
-        >
-          <Image
-            source={require('../../assets/weather.png')}
-            style={styles.facilityImage}
-            resizeMode="cover"
-          />
+        <View style={styles.heroCard}>
+          <View style={styles.heroTextContainer}>
+            <Text style={styles.heroTitle}>
+              Plan your next journey
+            </Text>
 
-          <Text style={styles.facilityText}>Weather</Text>
-        </TouchableOpacity>
+            <Text style={styles.heroDescription}>
+              Explore routes, check weather and book rides
+              from one application.
+            </Text>
+          </View>
 
-        {/* Map */}
-        <TouchableOpacity
-          style={styles.facility}
-          onPress={() => navigation.navigate('MapScreen')}
-        >
-          <Image
-            source={require('../../assets/map.png')}
-            style={styles.facilityImage}
-            resizeMode="cover"
-          />
+          <Text style={styles.heroIcon}>
+            ✈️
+          </Text>
+        </View>
 
-          <Text style={styles.facilityText}>Map</Text>
-        </TouchableOpacity>
+        <Text style={styles.sectionTitle}>
+          Travel Services
+        </Text>
 
-        {/* Cafes */}
-        <TouchableOpacity
-          style={styles.facility}
-          onPress={() => navigation.navigate('CafesScreen')}
-        >
-          <Image
-            source={require('../../assets/cafes.png')}
-            style={styles.facilityImage}
-            resizeMode="cover"
-          />
+        <Text style={styles.sectionSubtitle}>
+          What would you like to do today?
+        </Text>
 
-          <Text style={styles.facilityText}>Cafes</Text>
-        </TouchableOpacity>
+        <View style={styles.serviceContainer}>
+          {services.map(service => (
+            <TouchableOpacity
+              key={service.id}
+              activeOpacity={0.8}
+              style={styles.serviceCard}
+              onPress={() => openService(service.screen)}>
 
-        {/* Book Ride */}
-        <TouchableOpacity
-          style={styles.facility}
-          onPress={() => navigation.navigate('RideScreen')}
-        >
-          <Image
-            source={require('../../assets/ride.png')}
-            style={styles.facilityImage}
-            resizeMode="cover"
-          />
+              <View
+                style={[
+                  styles.iconContainer,
+                  {
+                    backgroundColor:
+                      service.backgroundColor,
+                  },
+                ]}>
 
-          <Text style={styles.facilityText}>Book Ride</Text>
-        </TouchableOpacity>
-      </View>
+                <Text style={styles.serviceIcon}>
+                  {service.icon}
+                </Text>
+              </View>
 
-      {/* Popular Places */}
-      <View style={styles.popularContainer}>
-        <Text style={styles.popularTitle}>Popular Places</Text>
-      </View>
+              <View style={styles.serviceContent}>
+                <Text style={styles.serviceTitle}>
+                  {service.title}
+                </Text>
+
+                <Text style={styles.serviceDescription}>
+                  {service.description}
+                </Text>
+              </View>
+
+              <View style={styles.arrowContainer}>
+                <Text style={styles.arrow}>
+                  ›
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.infoIcon}>
+            💡
+          </Text>
+
+          <View style={styles.infoTextContainer}>
+            <Text style={styles.infoTitle}>
+              Travel smarter
+            </Text>
+
+            <Text style={styles.infoDescription}>
+              Check the route and weather before starting
+              your journey.
+            </Text>
+          </View>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
+
 export default HomeScreen;
 
+
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F6F8FC',
   },
 
-  /* Header */
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 30,
+  },
+
   header: {
-    paddingHorizontal: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 22,
   },
 
   greeting: {
-    fontSize: 25,
-    fontWeight: 'bold',
+    color: '#64748B',
+    fontSize: 14,
   },
 
-  subtitle: {
-    fontSize: 16,
-    marginTop: 5,
+  appName: {
+    color: '#172033',
+    fontSize: 28,
+    fontWeight: '800',
+    marginTop: 2,
   },
 
-  /* Search */
-  searchContainer: {
+  profileCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 46,
+    height: 46,
+    backgroundColor: '#FF6B35',
+    borderRadius: 23,
+  },
+
+  profileText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  heroCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 55,
-    marginHorizontal: 25,
-    marginTop: 25,
-    paddingHorizontal: 15,
-    borderRadius: 30,
-    backgroundColor: '#f5f5f5',
+    minHeight: 155,
+    padding: 22,
+    backgroundColor: '#172033',
+    borderRadius: 24,
   },
 
-  searchIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 10,
-  },
-
-  searchInput: {
+  heroTextContainer: {
     flex: 1,
-    fontSize: 16,
   },
 
-  /* Facilities */
-  facilitiesContainer: {
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+
+  heroDescription: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+
+  heroIcon: {
+    fontSize: 56,
+    marginLeft: 12,
+  },
+
+  sectionTitle: {
+    color: '#172033',
+    fontSize: 21,
+    fontWeight: '800',
+    marginTop: 28,
+  },
+
+  sectionSubtitle: {
+    color: '#64748B',
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 16,
+  },
+
+  serviceContainer: {
+    gap: 13,
+  },
+
+  serviceCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginTop: 30,
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9EDF4',
+    borderRadius: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
   },
 
-  facility: {
-    width: '47%',
-    height: 180,
-    marginBottom: 20,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-    overflow: 'hidden',
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 58,
+    height: 58,
+    borderRadius: 17,
   },
 
-  facilityImage: {
-    width: '100%',
-    height: 140,
+  serviceIcon: {
+    fontSize: 29,
   },
 
-  facilityText: {
-    height: 40,
-    textAlign: 'center',
-    textAlignVertical: 'center',
+  serviceContent: {
+    flex: 1,
+    marginLeft: 15,
+  },
+
+  serviceTitle: {
+    color: '#172033',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
   },
 
-  /* Popular Places */
-  popularContainer: {
-    marginHorizontal: 25,
-    marginTop: 35,
+  serviceDescription: {
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
   },
 
-  popularTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  arrowContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+  },
+
+  arrow: {
+    color: '#475569',
+    fontSize: 25,
+    lineHeight: 27,
+  },
+
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 17,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: 18,
+    marginTop: 24,
+  },
+
+  infoIcon: {
+    fontSize: 27,
+  },
+
+  infoTextContainer: {
+    flex: 1,
+    marginLeft: 13,
+  },
+
+  infoTitle: {
+    color: '#9A3412',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  infoDescription: {
+    color: '#C2410C',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 3,
   },
 });

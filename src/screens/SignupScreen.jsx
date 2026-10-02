@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,14 +26,20 @@ function SignupScreen({navigation}) {
   const [confirmPassword, setConfirmPassword] =
     useState('');
   const [role, setRole] = useState('CUSTOMER');
+  const [showPassword, setShowPassword] =
+    useState(false);
   const [loading, setLoading] = useState(false);
 
 
   const handleSignup = async () => {
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+
     if (
-      !name.trim() ||
-      !email.trim() ||
-      !phone.trim() ||
+      !normalizedName ||
+      !normalizedEmail ||
+      !normalizedPhone ||
       !password ||
       !confirmPassword
     ) {
@@ -67,9 +75,9 @@ function SignupScreen({navigation}) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          full_name: name.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
+          full_name: normalizedName,
+          email: normalizedEmail,
+          phone: normalizedPhone,
           password,
           role,
         }),
@@ -78,11 +86,10 @@ function SignupScreen({navigation}) {
       const data = await response.json();
 
       if (!response.ok) {
-        let message = 'Unable to create your account.';
-
-        if (typeof data.detail === 'string') {
-          message = data.detail;
-        }
+        const message =
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Unable to create your account.';
 
         Alert.alert('Registration failed', message);
         return;
@@ -90,12 +97,12 @@ function SignupScreen({navigation}) {
 
       Alert.alert(
         'Account created',
-        'Your account was created successfully.',
+        'Your TravelMate account was created successfully.',
         [
           {
             text: 'Login',
             onPress: () =>
-              navigation.navigate('LoginScreen'),
+              navigation.replace('LoginScreen'),
           },
         ],
       );
@@ -113,182 +120,269 @@ function SignupScreen({navigation}) {
 
 
   return (
-    <SafeAreaView style={styles.safeAreaView}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/image.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
 
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>
-            CREATE ACCOUNT
-          </Text>
-
-          <Text style={styles.subtitle}>
-            Sign up to start your journey!
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
+          <View style={styles.brandContainer}>
             <Image
-              source={require('../../assets/user.png')}
-              style={styles.image}
+              source={require('../../assets/image.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
 
-            <TextInput
-              placeholder="Enter your name"
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../assets/gmail.png')}
-              style={styles.image}
-            />
-
-            <TextInput
-              placeholder="Enter your email"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../assets/user.png')}
-              style={styles.image}
-            />
-
-            <TextInput
-              placeholder="Enter your phone number"
-              style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <Text style={styles.roleTitle}>
-            Register as
-          </Text>
-
-          <View style={styles.roleContainer}>
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                role === 'CUSTOMER' &&
-                  styles.selectedRoleButton,
-              ]}
-              onPress={() => setRole('CUSTOMER')}>
-              <Text
-                style={[
-                  styles.roleText,
-                  role === 'CUSTOMER' &&
-                    styles.selectedRoleText,
-                ]}>
-                Customer
+            <View style={styles.brandTextContainer}>
+              <Text style={styles.brandName}>
+                TravelMate
               </Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                role === 'PROVIDER' &&
-                  styles.selectedRoleButton,
-              ]}
-              onPress={() => setRole('PROVIDER')}>
-              <Text
-                style={[
-                  styles.roleText,
-                  role === 'PROVIDER' &&
-                    styles.selectedRoleText,
-                ]}>
-                Provider
+              <Text style={styles.brandDescription}>
+                Create your travel account
               </Text>
-            </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../assets/lock.png')}
-              style={styles.image}
-            />
+          <View style={styles.formCard}>
+            <Text style={styles.title}>
+              Create account
+            </Text>
 
-            <TextInput
-              placeholder="Enter your password"
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+            <Text style={styles.subtitle}>
+              Enter your details to get started
+            </Text>
 
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../assets/lock.png')}
-              style={styles.image}
-            />
+            <Text style={styles.label}>
+              Full name
+            </Text>
 
-            <TextInput
-              placeholder="Confirm your password"
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-          </View>
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/user.png')}
+                style={styles.inputIcon}
+              />
 
-          <View style={styles.buttonContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor="#94A3B8"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                editable={!loading}
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Email address
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/gmail.png')}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Phone number
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.phoneIcon}>
+                ☎
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                placeholderTextColor="#94A3B8"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                editable={!loading}
+                maxLength={15}
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Register as
+            </Text>
+
+            <View style={styles.roleContainer}>
+              <RoleButton
+                icon="🧳"
+                label="Customer"
+                description="Book rides"
+                selected={role === 'CUSTOMER'}
+                disabled={loading}
+                onPress={() => setRole('CUSTOMER')}
+              />
+
+              <RoleButton
+                icon="🚘"
+                label="Provider"
+                description="Offer rides"
+                selected={role === 'PROVIDER'}
+                disabled={loading}
+                onPress={() => setRole('PROVIDER')}
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Password
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/lock.png')}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Minimum 8 characters"
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                editable={!loading}
+              />
+
+              <TouchableOpacity
+                disabled={loading}
+                onPress={() =>
+                  setShowPassword(current => !current)
+                }>
+
+                <Text style={styles.showPassword}>
+                  {showPassword ? 'Hide' : 'Show'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>
+              Confirm password
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/lock.png')}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter password again"
+                placeholderTextColor="#94A3B8"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleSignup}
+              />
+            </View>
+
             <TouchableOpacity
+              activeOpacity={0.85}
               style={[
-                styles.button,
+                styles.signupButton,
                 loading && styles.disabledButton,
               ]}
-              onPress={handleSignup}
-              disabled={loading}>
+              disabled={loading}
+              onPress={handleSignup}>
 
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>
+                <Text style={styles.signupButtonText}>
                   Create Account
                 </Text>
               )}
             </TouchableOpacity>
-          </View>
 
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>
-              Already have an account?
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('LoginScreen')
-              }>
-              <Text style={styles.loginButton}>
-                Login
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>
+                Already have an account?
               </Text>
-            </TouchableOpacity>
+
+              <TouchableOpacity
+                disabled={loading}
+                onPress={() =>
+                  navigation.navigate('LoginScreen')
+                }>
+
+                <Text style={styles.loginButton}>
+                  Sign in
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+
+function RoleButton({
+  icon,
+  label,
+  description,
+  selected,
+  disabled,
+  onPress,
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.roleButton,
+        selected && styles.selectedRoleButton,
+      ]}>
+
+      <Text style={styles.roleIcon}>
+        {icon}
+      </Text>
+
+      <Text
+        style={[
+          styles.roleLabel,
+          selected && styles.selectedRoleLabel,
+        ]}>
+        {label}
+      </Text>
+
+      <Text
+        style={[
+          styles.roleDescription,
+          selected && styles.selectedRoleDescription,
+        ]}>
+        {description}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -297,140 +391,204 @@ export default SignupScreen;
 
 
 const styles = StyleSheet.create({
-  safeAreaView: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F6F8FC',
   },
 
-  scrollContent: {
-    paddingBottom: 30,
+  keyboardView: {
+    flex: 1,
   },
 
-  logoContainer: {
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 35,
+  },
+
+  brandContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 18,
+    paddingHorizontal: 4,
   },
 
   logo: {
-    width: 130,
-    height: 130,
+    width: 76,
+    height: 76,
   },
 
-  header: {
-    paddingHorizontal: 40,
-    marginTop: 5,
+  brandTextContainer: {
+    marginLeft: 13,
   },
 
-  welcomeText: {
-    fontWeight: 'bold',
+  brandName: {
+    color: '#172033',
     fontSize: 25,
+    fontWeight: '800',
+  },
+
+  brandDescription: {
+    color: '#64748B',
+    fontSize: 13,
+    marginTop: 3,
+  },
+
+  formCard: {
+    padding: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9EDF4',
+    borderRadius: 24,
+    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+  },
+
+  title: {
+    color: '#172033',
+    fontSize: 24,
+    fontWeight: '800',
   },
 
   subtitle: {
-    fontSize: 16,
+    color: '#64748B',
+    fontSize: 13,
     marginTop: 5,
+    marginBottom: 23,
   },
 
-  form: {
-    paddingHorizontal: 40,
-    paddingTop: 25,
+  label: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 8,
   },
 
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
     height: 55,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    borderRadius: 50,
-    backgroundColor: '#f8f2f2',
+    paddingHorizontal: 14,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 15,
+    marginBottom: 17,
   },
 
-  image: {
-    width: 22,
-    height: 22,
-    marginRight: 10,
+  inputIcon: {
+    width: 21,
+    height: 21,
+    marginRight: 11,
+    tintColor: '#64748B',
+  },
+
+  phoneIcon: {
+    color: '#64748B',
+    fontSize: 21,
+    marginRight: 11,
   },
 
   input: {
     flex: 1,
-    fontSize: 16,
-  },
-
-  roleTitle: {
+    color: '#172033',
     fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 8,
   },
 
   roleContainer: {
     flexDirection: 'row',
-    marginBottom: 15,
-    gap: 10,
+    gap: 11,
+    marginBottom: 19,
   },
 
   roleButton: {
     flex: 1,
-    height: 45,
-    borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 25,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 13,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
   },
 
   selectedRoleButton: {
-    backgroundColor: '#000',
+    backgroundColor: '#FFF1EB',
+    borderWidth: 2,
+    borderColor: '#FF6B35',
   },
 
-  roleText: {
-    color: '#000',
-    fontWeight: '600',
+  roleIcon: {
+    fontSize: 25,
   },
 
-  selectedRoleText: {
-    color: '#fff',
+  roleLabel: {
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 5,
   },
 
-  buttonContainer: {
+  selectedRoleLabel: {
+    color: '#C2410C',
+  },
+
+  roleDescription: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  selectedRoleDescription: {
+    color: '#EA580C',
+  },
+
+  showPassword: {
+    color: '#FF6B35',
+    fontSize: 12,
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+
+  signupButton: {
     alignItems: 'center',
-    marginTop: 10,
-  },
-
-  button: {
-    backgroundColor: '#000',
-    width: '100%',
-    height: 55,
-    borderRadius: 50,
     justifyContent: 'center',
-    alignItems: 'center',
+    height: 56,
+    backgroundColor: '#FF6B35',
+    borderRadius: 15,
+    marginTop: 6,
   },
 
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.65,
   },
 
-  buttonText: {
-    color: '#fff',
+  signupButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 25,
+    marginTop: 22,
   },
 
   loginText: {
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
   },
 
   loginButton: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: '#FF6B35',
+    fontSize: 13,
+    fontWeight: '800',
     marginLeft: 5,
   },
 });

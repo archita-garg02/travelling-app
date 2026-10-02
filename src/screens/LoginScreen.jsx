@@ -3,16 +3,17 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import AsyncStorage from
-  '@react-native-async-storage/async-storage';
-import {SafeAreaView} from
-  'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 
 const LOGIN_URL = 'http://10.0.2.2:8000/auth/login';
@@ -21,158 +22,239 @@ const LOGIN_URL = 'http://10.0.2.2:8000/auth/login';
 function LoginScreen({navigation}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
 
   const handleLogin = async () => {
-    if (!email.trim() || !password) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail || !password) {
+    Alert.alert(
+      'Missing information',
+      'Please enter your email and password.',
+    );
+    return;
+  }
+
+  setLoading(true);
+
+  let data;
+
+  try {
+    const response = await fetch(LOGIN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        password,
+      }),
+    });
+
+    data = await response.json();
+
+    if (!response.ok) {
       Alert.alert(
-        'Missing information',
-        'Please enter your email and password.',
+        'Login failed',
+        data.detail || 'Invalid email or password.',
       );
+
+      setLoading(false);
       return;
     }
+  } catch (error) {
+    console.log('Network/login response error:', error);
 
-    try {
-      setLoading(true);
+    Alert.alert(
+      'Connection error',
+      'Unable to connect to the TravelMate server.',
+    );
 
-      const response = await fetch(LOGIN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          password,
-        }),
-      });
+    setLoading(false);
+    return;
+  }
 
-      const data = await response.json();
+  if (!data.access_token || !data.user) {
+    console.log('Unexpected login response:', data);
 
-      if (!response.ok) {
-        Alert.alert(
-          'Login failed',
-          data.detail || 'Invalid email or password.',
-        );
-        return;
-      }
+    Alert.alert(
+      'Server response error',
+      'The server returned incomplete login information.',
+    );
 
-      await AsyncStorage.setItem(
-        'accessToken',
-        data.access_token,
-      );
+    setLoading(false);
+    return;
+  }
 
-      await AsyncStorage.setItem(
-        'user',
-        JSON.stringify(data.user),
-      );
+  try {
+    await AsyncStorage.setItem(
+      'accessToken',
+      data.access_token,
+    );
 
-      Alert.alert(
-        'Login successful',
-        `Welcome, ${data.user.full_name}!`,
-      );
+    await AsyncStorage.setItem(
+      'user',
+      JSON.stringify(data.user),
+    );
+  } catch (error) {
+    console.log('Login storage error:', error);
 
-      navigation.replace('HomeScreen');
-    } catch (error) {
-      console.log('Login error:', error);
+    Alert.alert(
+      'Storage error',
+      'Login succeeded, but the session could not be saved.',
+    );
 
-      Alert.alert(
-        'Connection error',
-        'Unable to connect to the TravelMate server.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    setLoading(false);
+    return;
+  }
+
+  setLoading(false);
+
+  navigation.reset({
+    index: 0,
+    routes: [{name: 'HomeScreen'}],
+  });
+};
 
 
   return (
-    <SafeAreaView style={styles.safeAreaView}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/image.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          WELCOME BACK
-        </Text>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.subtitle}>
-          Sign in to continue!
-        </Text>
-      </View>
+          <View style={styles.brandContainer}>
+            <View style={styles.logoCircle}>
+              <Image
+                source={require('../../assets/image.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
 
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Image
-            source={require('../../assets/gmail.png')}
-            style={styles.image}
-          />
-
-          <TextInput
-            placeholder="Enter your email"
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Image
-            source={require('../../assets/lock.png')}
-            style={styles.image}
-          />
-
-          <TextInput
-            placeholder="Enter your password"
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              loading && styles.disabledButton,
-            ]}
-            onPress={handleLogin}
-            disabled={loading}>
-
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                Login
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>
-            Don't have an account?
-          </Text>
-
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('SignupScreen')
-            }>
-            <Text style={styles.signupButton}>
-              Sign Up
+            <Text style={styles.brandName}>
+              TravelMate
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+
+            <Text style={styles.brandDescription}>
+              Your complete travel companion
+            </Text>
+          </View>
+
+          <View style={styles.formCard}>
+            <Text style={styles.title}>
+              Welcome back
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Sign in to continue your journey
+            </Text>
+
+            <Text style={styles.label}>
+              Email address
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/gmail.png')}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+                returnKeyType="next"
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Password
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../../assets/lock.png')}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+
+              <TouchableOpacity
+                onPress={() => setShowPassword(current => !current)}
+                disabled={loading}>
+
+                <Text style={styles.showPassword}>
+                  {showPassword ? 'Hide' : 'Show'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[
+                styles.loginButton,
+                loading && styles.disabledButton,
+              ]}
+              onPress={handleLogin}
+              disabled={loading}>
+
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>
+                  Sign In
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>
+                Don't have an account?
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('SignupScreen')
+                }
+                disabled={loading}>
+
+                <Text style={styles.signupButton}>
+                  Create account
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.footer}>
+            Plan routes, check weather and book rides
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -182,101 +264,171 @@ export default LoginScreen;
 
 
 const styles = StyleSheet.create({
-  safeAreaView: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F6F8FC',
   },
 
-  logoContainer: {
+  keyboardView: {
+    flex: 1,
+  },
+
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 24,
+  },
+
+  brandContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginBottom: 24,
+  },
+
+  logoCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 110,
+    height: 110,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 55,
+    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 7,
   },
 
   logo: {
-    width: 180,
-    height: 180,
+    width: 82,
+    height: 82,
   },
 
-  header: {
-    paddingHorizontal: 40,
-    marginTop: 10,
+  brandName: {
+    color: '#172033',
+    fontSize: 29,
+    fontWeight: '800',
+    marginTop: 14,
   },
 
-  welcomeText: {
-    fontWeight: 'bold',
-    fontSize: 25,
+  brandDescription: {
+    color: '#64748B',
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  formCard: {
+    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9EDF4',
+    borderRadius: 24,
+    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+  },
+
+  title: {
+    color: '#172033',
+    fontSize: 24,
+    fontWeight: '800',
   },
 
   subtitle: {
-    fontSize: 16,
+    color: '#64748B',
+    fontSize: 13,
     marginTop: 5,
+    marginBottom: 24,
   },
 
-  form: {
-    paddingHorizontal: 40,
-    paddingTop: 40,
+  label: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 8,
   },
 
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    height: 55,
-    marginBottom: 20,
+    height: 56,
     paddingHorizontal: 15,
-    borderRadius: 50,
-    backgroundColor: '#f8f2f2',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 15,
+    marginBottom: 18,
   },
 
-  image: {
-    width: 22,
-    height: 22,
-    marginRight: 10,
+  inputIcon: {
+    width: 21,
+    height: 21,
+    marginRight: 11,
+    tintColor: '#64748B',
   },
 
   input: {
     flex: 1,
-    fontSize: 16,
+    color: '#172033',
+    fontSize: 15,
   },
 
-  buttonContainer: {
+  showPassword: {
+    color: '#FF6B35',
+    fontSize: 12,
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+
+  loginButton: {
     alignItems: 'center',
-    marginTop: 20,
-  },
-
-  button: {
-    backgroundColor: '#000',
-    width: '100%',
-    height: 55,
-    borderRadius: 50,
     justifyContent: 'center',
-    alignItems: 'center',
+    height: 56,
+    backgroundColor: '#FF6B35',
+    borderRadius: 15,
+    marginTop: 7,
   },
 
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.65,
   },
 
-  buttonText: {
-    color: '#fff',
+  loginButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 25,
+    marginTop: 22,
   },
 
   signupText: {
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
   },
 
   signupButton: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: '#FF6B35',
+    fontSize: 13,
+    fontWeight: '800',
     marginLeft: 5,
+  },
+
+  footer: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 22,
   },
 });

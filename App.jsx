@@ -13,7 +13,6 @@ import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import WeatherScreen from './src/screens/WeatherScreen';
 import MapScreen from './src/screens/MapScreen';
-import CafesScreen from './src/screens/CafesScreen';
 import RideScreen from './src/screens/RideScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AddServiceScreen from './src/screens/AddServiceScreen';
@@ -81,12 +80,6 @@ function StackNavigator() {
       <Stack.Screen
         name="MapScreen"
         component={MapScreen}
-        options={{ headerShown: false }}
-      />
-
-      <Stack.Screen
-        name="CafesScreen"
-        component={CafesScreen}
         options={{ headerShown: false }}
       />
 

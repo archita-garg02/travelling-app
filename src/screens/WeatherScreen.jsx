@@ -10,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
 import Geolocation from '@react-native-community/geolocation';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -78,7 +77,10 @@ function WeatherScreen() {
     return result === PermissionsAndroid.RESULTS.GRANTED;
   };
 
-  const fetchWeather = async (coordinates, selectedLocationName = '') => {
+  const fetchWeather = async (
+    coordinates,
+    selectedLocationName = '',
+  ) => {
     const {latitude, longitude} = coordinates;
 
     const weatherUrl =
@@ -95,8 +97,6 @@ function WeatherScreen() {
       `?lat=${latitude}&lon=${longitude}` +
       '&format=jsonv2&zoom=10';
 
-    // Weather is the important request. Location-name lookup is
-    // handled separately so its failure cannot hide valid weather.
     const weatherResponse = await fetch(weatherUrl);
 
     if (!weatherResponse.ok) {
@@ -173,9 +173,7 @@ function WeatherScreen() {
           });
         } catch (weatherError) {
           console.log('Weather error:', weatherError);
-          setError(
-            weatherError.message || 'Unable to load weather.',
-          );
+          setError(weatherError.message || 'Unable to load weather.');
         } finally {
           setLoading(false);
         }
@@ -229,7 +227,9 @@ function WeatherScreen() {
 
       const displayName = [result.name, result.admin1, result.country]
         .filter(Boolean)
-        .filter((value, index, values) => values.indexOf(value) === index)
+        .filter(
+          (value, index, values) => values.indexOf(value) === index,
+        )
         .join(', ');
 
       await fetchWeather(
@@ -244,7 +244,8 @@ function WeatherScreen() {
     } catch (searchError) {
       console.log('Location search error:', searchError);
       setError(
-        searchError.message || 'Unable to search for this location.',
+        searchError.message ||
+          'Unable to search for this location.',
       );
     } finally {
       setSearchLoading(false);
@@ -264,7 +265,9 @@ function WeatherScreen() {
       await fetchWeather(activeCoordinates, locationName);
     } catch (weatherError) {
       console.log('Refresh error:', weatherError);
-      setError(weatherError.message || 'Unable to refresh weather.');
+      setError(
+        weatherError.message || 'Unable to refresh weather.',
+      );
     } finally {
       setLoading(false);
     }
@@ -285,7 +288,8 @@ function WeatherScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Weather</Text>
+            <Text style={styles.eyebrow}>TRAVEL WEATHER</Text>
+            <Text style={styles.title}>Weather forecast</Text>
             <Text style={styles.location}>📍 {locationName}</Text>
           </View>
 
@@ -293,61 +297,82 @@ function WeatherScreen() {
             style={styles.refreshButton}
             onPress={refreshWeather}
             disabled={loading || searchLoading}>
-            <Text style={styles.refreshText}>↻</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.searchCard}>
-          <TextInput
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={text => {
-              setSearchText(text);
-              setError('');
-            }}
-            onSubmitEditing={searchLocation}
-            placeholder="Search city or location"
-            placeholderTextColor="#94A3B8"
-            returnKeyType="search"
-            editable={!searchLoading}
-          />
-
-          <Pressable
-            style={[
-              styles.searchButton,
-              searchLoading && styles.disabledButton,
-            ]}
-            onPress={searchLocation}
-            disabled={searchLoading}>
-            {searchLoading ? (
+            {loading && weather ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={styles.searchButtonText}>Search</Text>
+              <Text style={styles.refreshText}>↻</Text>
             )}
           </Pressable>
         </View>
 
-        <Pressable
-          style={styles.myLocationButton}
-          onPress={loadWeather}
-          disabled={loading || searchLoading}>
-          <Text style={styles.myLocationText}>⌖ Use my location</Text>
-        </Pressable>
+        <View style={styles.searchPanel}>
+          <View style={styles.searchInputRow}>
+            <Text style={styles.searchIcon}>⌕</Text>
+            <TextInput
+              style={styles.searchInput}
+              value={searchText}
+              onChangeText={text => {
+                setSearchText(text);
+                setError('');
+              }}
+              onSubmitEditing={searchLocation}
+              placeholder="Search a city"
+              placeholderTextColor="#94A3B8"
+              returnKeyType="search"
+              editable={!searchLoading}
+            />
+
+            <Pressable
+              style={[
+                styles.searchButton,
+                searchLoading && styles.disabledButton,
+              ]}
+              onPress={searchLocation}
+              disabled={searchLoading}>
+              {searchLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.searchButtonText}>Search</Text>
+              )}
+            </Pressable>
+          </View>
+
+          <Pressable
+            style={styles.myLocationButton}
+            onPress={loadWeather}
+            disabled={loading || searchLoading}>
+            <Text style={styles.myLocationIcon}>⌖</Text>
+            <Text style={styles.myLocationText}>
+              Use my current location
+            </Text>
+          </Pressable>
+        </View>
 
         {loading && !weather && (
           <View style={styles.statusCard}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.statusTitle}>
+              Loading local weather
+            </Text>
             <Text style={styles.statusText}>
-              Finding your local weather...
+              Getting your location and latest forecast...
             </Text>
           </View>
         )}
 
         {error !== '' && (
           <View style={styles.errorCard}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable style={styles.retryButton} onPress={refreshWeather}>
-              <Text style={styles.retryText}>Try again</Text>
+            <View style={styles.errorIconCircle}>
+              <Text style={styles.errorIcon}>!</Text>
+            </View>
+            <View style={styles.errorContent}>
+              <Text style={styles.errorTitle}>Weather unavailable</Text>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+            <Pressable
+              style={styles.retryButton}
+              onPress={refreshWeather}>
+              <Text style={styles.retryText}>Retry</Text>
             </Pressable>
           </View>
         )}
@@ -355,52 +380,61 @@ function WeatherScreen() {
         {weather && (
           <>
             <View style={styles.currentCard}>
-              <Text style={styles.weatherIcon}>
-                {currentCondition.icon}
-              </Text>
-              <Text style={styles.temperature}>
-                {Math.round(weather.current.temperature_2m)}°
-              </Text>
-              <Text style={styles.condition}>
-                {currentCondition.label}
-              </Text>
-              <Text style={styles.feelsLike}>
-                Feels like{' '}
-                {Math.round(weather.current.apparent_temperature)}°C
-              </Text>
+              <View style={styles.currentTopRow}>
+                <View style={styles.currentLocationBlock}>
+                  <Text style={styles.currentLabel}>NOW IN</Text>
+                  <Text
+                    style={styles.currentLocation}
+                    numberOfLines={2}>
+                    {locationName}
+                  </Text>
+                  <Text style={styles.condition}>
+                    {currentCondition.label}
+                  </Text>
+                </View>
+
+                <Text style={styles.weatherIcon}>
+                  {currentCondition.icon}
+                </Text>
+              </View>
+
+              <View style={styles.temperatureRow}>
+                <Text style={styles.temperature}>
+                  {Math.round(weather.current.temperature_2m)}°
+                </Text>
+                <Text style={styles.feelsLike}>
+                  Feels like{`\n`}
+                  {Math.round(
+                    weather.current.apparent_temperature,
+                  )}°C
+                </Text>
+              </View>
 
               <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailIcon}>💧</Text>
-                  <Text style={styles.detailValue}>
-                    {weather.current.relative_humidity_2m}%
-                  </Text>
-                  <Text style={styles.detailLabel}>Humidity</Text>
-                </View>
-
-                <View style={styles.detailDivider} />
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailIcon}>💨</Text>
-                  <Text style={styles.detailValue}>
-                    {Math.round(weather.current.wind_speed_10m)} km/h
-                  </Text>
-                  <Text style={styles.detailLabel}>Wind</Text>
-                </View>
-
-                <View style={styles.detailDivider} />
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailIcon}>🌧️</Text>
-                  <Text style={styles.detailValue}>
-                    {weather.daily.precipitation_probability_max[0]}%
-                  </Text>
-                  <Text style={styles.detailLabel}>Rain</Text>
-                </View>
+                <WeatherMetric
+                  icon="💧"
+                  value={`${weather.current.relative_humidity_2m}%`}
+                  label="Humidity"
+                />
+                <WeatherMetric
+                  icon="💨"
+                  value={`${Math.round(
+                    weather.current.wind_speed_10m,
+                  )} km/h`}
+                  label="Wind"
+                />
+                <WeatherMetric
+                  icon="🌧️"
+                  value={`${weather.daily.precipitation_probability_max[0]}%`}
+                  label="Rain"
+                />
               </View>
             </View>
 
-            <Text style={styles.sectionTitle}>5-day forecast</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>5-day forecast</Text>
+              <Text style={styles.sectionCaption}>Next five days</Text>
+            </View>
 
             <View style={styles.forecastCard}>
               {weather.daily.time.map((date, index) => {
@@ -422,9 +456,14 @@ function WeatherScreen() {
                     <Text style={styles.forecastIcon}>
                       {condition.icon}
                     </Text>
-                    <Text style={styles.forecastCondition}>
-                      {condition.label}
-                    </Text>
+                    <View style={styles.forecastDescription}>
+                      <Text style={styles.forecastCondition}>
+                        {condition.label}
+                      </Text>
+                      <Text style={styles.forecastRain}>
+                        Rain {weather.daily.precipitation_probability_max[index]}%
+                      </Text>
+                    </View>
                     <Text style={styles.forecastTemperature}>
                       {Math.round(
                         weather.daily.temperature_2m_max[index],
@@ -439,7 +478,7 @@ function WeatherScreen() {
             </View>
 
             <Text style={styles.attribution}>
-              Weather data by Open-Meteo
+              Weather data provided by Open-Meteo
             </Text>
           </>
         )}
@@ -448,136 +487,337 @@ function WeatherScreen() {
   );
 }
 
+function WeatherMetric({icon, value, label}) {
+  return (
+    <View style={styles.metricCard}>
+      <Text style={styles.metricIcon}>{icon}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricLabel}>{label}</Text>
+    </View>
+  );
+}
+
 export default WeatherScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F7F8FA'},
-  content: {padding: 20, paddingBottom: 32},
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F7FC',
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 36,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 22,
+    marginBottom: 19,
   },
-  title: {color: '#1E293B', fontSize: 28, fontWeight: '700'},
-  location: {color: '#64748B', fontSize: 14, marginTop: 5},
-  searchCard: {
+  eyebrow: {
+    color: '#2563EB',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  title: {
+    color: '#172033',
+    fontSize: 27,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  location: {
+    maxWidth: 260,
+    color: '#64748B',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  refreshButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#172554',
+    borderRadius: 14,
+  },
+  refreshText: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: '700',
+  },
+  searchPanel: {
+    padding: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 19,
+    marginBottom: 17,
+  },
+  searchInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 6,
-    paddingLeft: 15,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    elevation: 3,
-    marginBottom: 10,
+  },
+  searchIcon: {
+    color: '#64748B',
+    fontSize: 24,
+    marginHorizontal: 7,
   },
   searchInput: {
     flex: 1,
-    color: '#1E293B',
+    color: '#172033',
     fontSize: 14,
     paddingVertical: 10,
   },
   searchButton: {
-    minWidth: 72,
-    minHeight: 40,
+    minWidth: 76,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 13,
     backgroundColor: '#FF6B35',
-    borderRadius: 10,
+    borderRadius: 12,
   },
   searchButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  disabledButton: {opacity: 0.6},
+  disabledButton: {
+    opacity: 0.6,
+  },
   myLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#FFF1EB',
-    borderRadius: 10,
-    marginBottom: 16,
+    paddingHorizontal: 9,
+    paddingTop: 10,
+  },
+  myLocationIcon: {
+    color: '#2563EB',
+    fontSize: 17,
+    fontWeight: '800',
   },
   myLocationText: {
-    color: '#FF6B35',
+    color: '#2563EB',
     fontSize: 12,
     fontWeight: '700',
+    marginLeft: 6,
   },
-  refreshButton: {
-    width: 42,
-    height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF1EB',
-    borderRadius: 21,
-  },
-  refreshText: {color: '#FF6B35', fontSize: 27, fontWeight: '700'},
   statusCard: {
-    minHeight: 250,
+    minHeight: 270,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 25,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
   },
-  statusText: {color: '#64748B', fontSize: 14, marginTop: 14},
+  statusTitle: {
+    color: '#172033',
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: 16,
+  },
+  statusText: {
+    color: '#64748B',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
+  },
   errorCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FEE2E2',
+    padding: 14,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
     borderRadius: 16,
     marginBottom: 16,
   },
-  errorText: {color: '#B91C1C', fontSize: 13, textAlign: 'center'},
-  retryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    backgroundColor: '#DC2626',
-    borderRadius: 10,
-    marginTop: 12,
-  },
-  retryText: {color: '#FFFFFF', fontSize: 12, fontWeight: '700'},
-  currentCard: {
+  errorIconCircle: {
+    width: 34,
+    height: 34,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 20,
-    backgroundColor: '#FF6B35',
-    borderRadius: 26,
-    elevation: 5,
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    borderRadius: 17,
   },
-  weatherIcon: {fontSize: 62},
+  errorIcon: {
+    color: '#DC2626',
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  errorContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  errorTitle: {
+    color: '#991B1B',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  errorText: {
+    color: '#B91C1C',
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  retryButton: {
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    backgroundColor: '#DC2626',
+    borderRadius: 9,
+    marginLeft: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  currentCard: {
+    padding: 22,
+    backgroundColor: '#172554',
+    borderRadius: 26,
+    elevation: 4,
+  },
+  currentTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  currentLocationBlock: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  currentLabel: {
+    color: '#93C5FD',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+  },
+  currentLocation: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '800',
+    marginTop: 5,
+  },
+  condition: {
+    color: '#BFDBFE',
+    fontSize: 13,
+    marginTop: 5,
+  },
+  weatherIcon: {
+    fontSize: 57,
+  },
+  temperatureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 7,
+  },
   temperature: {
     color: '#FFFFFF',
     fontSize: 68,
     fontWeight: '300',
-    lineHeight: 75,
+    lineHeight: 77,
   },
-  condition: {color: '#FFFFFF', fontSize: 20, fontWeight: '700'},
-  feelsLike: {color: '#FFE4D8', fontSize: 13, marginTop: 5},
+  feelsLike: {
+    color: '#BFDBFE',
+    fontSize: 11,
+    lineHeight: 17,
+    marginBottom: 12,
+    marginLeft: 12,
+  },
   detailsRow: {
-    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  metricCard: {
+    width: '31%',
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF14',
+    borderWidth: 1,
+    borderColor: '#FFFFFF20',
+    borderRadius: 15,
+  },
+  metricIcon: {
+    fontSize: 17,
+  },
+  metricValue: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 5,
+  },
+  metricLabel: {
+    color: '#BFDBFE',
+    fontSize: 9,
+    marginTop: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 25,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    color: '#172033',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sectionCaption: {
+    color: '#94A3B8',
+    fontSize: 11,
+  },
+  forecastCard: {
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+  },
+  forecastRow: {
+    minHeight: 67,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingTop: 22,
-    marginTop: 22,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.3)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  detailItem: {flex: 1, alignItems: 'center'},
-  detailIcon: {fontSize: 19},
-  detailValue: {color: '#FFFFFF', fontSize: 14, fontWeight: '700', marginTop: 5},
-  detailLabel: {color: '#FFE4D8', fontSize: 11, marginTop: 2},
-  detailDivider: {width: 1, height: 48, backgroundColor: 'rgba(255,255,255,0.3)'},
-  sectionTitle: {color: '#1E293B', fontSize: 18, fontWeight: '700', marginTop: 25, marginBottom: 12},
-  forecastCard: {paddingHorizontal: 16, backgroundColor: '#FFFFFF', borderRadius: 20, elevation: 2},
-  forecastRow: {minHeight: 64, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F1F5F9'},
-  lastForecastRow: {borderBottomWidth: 0},
-  forecastDay: {width: 52, color: '#1E293B', fontSize: 13, fontWeight: '700'},
-  forecastIcon: {width: 38, fontSize: 23},
-  forecastCondition: {flex: 1, color: '#64748B', fontSize: 12},
-  forecastTemperature: {color: '#1E293B', fontSize: 13, fontWeight: '700'},
-  attribution: {color: '#94A3B8', fontSize: 10, textAlign: 'center', marginTop: 14},
+  lastForecastRow: {
+    borderBottomWidth: 0,
+  },
+  forecastDay: {
+    width: 49,
+    color: '#172033',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  forecastIcon: {
+    width: 38,
+    fontSize: 22,
+  },
+  forecastDescription: {
+    flex: 1,
+  },
+  forecastCondition: {
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  forecastRain: {
+    color: '#94A3B8',
+    fontSize: 9,
+    marginTop: 3,
+  },
+  forecastTemperature: {
+    color: '#172033',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  attribution: {
+    color: '#94A3B8',
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 14,
+  },
 });
