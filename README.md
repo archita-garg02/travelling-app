@@ -1,6 +1,6 @@
 # TravelMate
 
-TravelMate is a full-stack mobile travel application built with React Native, FastAPI, and MySQL. It combines ride booking, maps, route guidance, weather information, and café discovery in one application.
+TravelMate is a full-stack mobile travel application built with **React Native, FastAPI, and MySQL**. It combines weather information, map-based destination search, route calculation, and role-based ride booking in one Android application.
 
 ## Features
 
@@ -8,15 +8,18 @@ TravelMate is a full-stack mobile travel application built with React Native, Fa
 - Secure login using JWT authentication
 - Password hashing using Argon2
 - Customer and provider role-based authorization
+- User profile and logout functionality
 - Providers can add and view vehicle services
+- Provider dashboard with service and availability summaries
 - Customers can search for available bikes, autos, and cabs
 - Customers can create ride bookings
-- Customers can view their booking history
-- Address search using OpenStreetMap
-- Reverse geocoding using OpenStreetMap
-- Route distance, duration, and directions using OSRM
-- Weather information for selected locations
-- Map, café, ride, weather, home, and profile screens
+- Customers and providers can view relevant bookings
+- Current location using device GPS
+- Address search and reverse geocoding using OpenStreetMap Nominatim
+- Driving route, distance, and duration using OSRM
+- Route display using React Native Maps
+- Current weather and five-day forecasts using Open-Meteo
+- Weather search for different cities and locations
 - Database version management using Alembic migrations
 
 ## Technology Stack
@@ -28,6 +31,7 @@ TravelMate is a full-stack mobile travel application built with React Native, Fa
 - React Navigation
 - AsyncStorage
 - React Native Maps
+- React Native Geolocation
 
 ### Backend
 
@@ -35,26 +39,45 @@ TravelMate is a full-stack mobile travel application built with React Native, Fa
 - FastAPI
 - SQLAlchemy
 - Alembic
+- PyMySQL
 - JWT authentication
 - Argon2 password hashing
 
-### Database and APIs
+### Database and External Services
 
 - MySQL
-- OpenStreetMap Nominatim API
+- OpenStreetMap Nominatim
 - OSRM Routing API
+- Open-Meteo Weather API
+
+## Architecture
+
+```text
+React Native Android App
+        |
+        | HTTP/JSON requests
+        v
+FastAPI Backend
+   |          |
+   |          +---- Nominatim and OSRM
+   v
+MySQL Database
+
+React Native App ---- Open-Meteo Weather API
+```
 
 ## Application Workflow
 
-1. A user registers as a customer or provider.
-2. FastAPI hashes the password and stores the user in MySQL.
+1. A user registers as a customer or service provider.
+2. FastAPI validates the request, hashes the password, and stores the user in MySQL.
 3. The user logs in and receives a JWT access token.
-4. React Native stores the token using AsyncStorage.
-5. A provider adds their vehicle and fare details.
-6. A customer searches for available bikes, autos, or cabs.
-7. The customer selects a vehicle and creates a booking.
-8. The booking is stored with a `PENDING` status.
-9. The customer can view the booking in My Bookings.
+4. React Native stores the token and user information using AsyncStorage.
+5. The Ride screen displays a different interface according to the user's role.
+6. A provider adds a vehicle with its type, seats, city, and fare details.
+7. A customer searches for available bikes, autos, or cabs.
+8. The customer selects a vehicle and creates a booking.
+9. The backend stores the booking with a `PENDING` status.
+10. The user can view the booking through the My Bookings screen.
 
 ## Project Structure
 
@@ -69,7 +92,6 @@ TravelMate/
 │       ├── HomeScreen.jsx
 │       ├── WeatherScreen.jsx
 │       ├── MapScreen.jsx
-│       ├── CafesScreen.jsx
 │       ├── RideScreen.jsx
 │       ├── AddServiceScreen.jsx
 │       ├── MyBookingsScreen.jsx
@@ -98,31 +120,46 @@ TravelMate/
 │   ├── main.py
 │   └── requirements.txt
 ├── App.jsx
+├── metro.config.js
 ├── package.json
 └── README.md
 ```
+
+## Main Screens
+
+| Screen | Purpose |
+|---|---|
+| `LoginScreen` | Authenticates an existing user |
+| `SignupScreen` | Registers a customer or provider |
+| `HomeScreen` | Provides access to the main travel features |
+| `WeatherScreen` | Shows current weather and a five-day forecast |
+| `MapScreen` | Searches destinations and displays driving routes |
+| `RideScreen` | Displays customer booking or provider dashboard UI |
+| `AddServiceScreen` | Allows providers to register a vehicle service |
+| `MyBookingsScreen` | Displays the authenticated user's bookings |
+| `ProfileScreen` | Displays account details and provides logout |
 
 ## Database Tables
 
 | Table | Purpose |
 |---|---|
 | `users` | Stores customer and provider accounts |
-| `provider_services` | Stores provider vehicles and fare details |
+| `provider_services` | Stores provider vehicles, fares, cities, and availability |
 | `bookings` | Stores customer ride requests |
-| `alembic_version` | Tracks the current database migration |
+| `alembic_version` | Tracks the applied database migration |
 
 ## Security
 
 TravelMate applies the following security rules:
 
 - Passwords are stored as secure hashes, not plain text.
-- Protected endpoints require a valid JWT.
+- Protected endpoints require a valid JWT access token.
 - The backend identifies the current user from the JWT.
 - Customers cannot create provider vehicle services.
 - Providers cannot create customer bookings.
-- A provider cannot book their own vehicle.
-- Users can access only their own protected information.
-- Database and JWT secrets are stored in `.env`.
+- Providers can access only their own vehicle services.
+- Users can access only authorized booking information.
+- Database credentials and JWT secrets are stored in `.env`.
 - The `.env` file is excluded from Git.
 
 ## Backend Setup
@@ -138,18 +175,13 @@ COLLATE utf8mb4_unicode_ci;
 ### 2. Open the backend directory
 
 ```powershell
-cd backend
+cd C:\reactproject\TravelMate\backend
 ```
 
-### 3. Create a virtual environment
+### 3. Create and activate a virtual environment
 
 ```powershell
 python -m venv venv
-```
-
-Activate it:
-
-```powershell
 .\venv\Scripts\Activate.ps1
 ```
 
@@ -161,7 +193,7 @@ pip install -r requirements.txt
 
 ### 5. Configure environment variables
 
-Create a file named `.env` inside the `backend` directory:
+Create a `.env` file inside the `backend` directory:
 
 ```env
 DATABASE_URL=mysql+pymysql://USERNAME:PASSWORD@localhost:3306/travelmate
@@ -170,7 +202,9 @@ JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
 
-Never commit your real `.env` file.
+Replace `USERNAME`, `PASSWORD`, and the JWT secret with your own values.
+
+Never commit the real `.env` file to GitHub.
 
 ### 6. Apply database migrations
 
@@ -192,35 +226,49 @@ http://127.0.0.1:8000/docs
 
 ## React Native Setup
 
-Open the project root:
+### 1. Open the project root
 
 ```powershell
 cd C:\reactproject\TravelMate
 ```
 
-Install packages:
+### 2. Install JavaScript packages
 
 ```powershell
 npm install
 ```
 
-Start Metro:
+### 3. Start an Android emulator
+
+Open Android Studio and start an emulator from Device Manager.
+
+### 4. Start Metro
 
 ```powershell
-npm start
+npx react-native start
 ```
 
-In another terminal, start the Android application:
+If Metro has stale cache data, use:
 
 ```powershell
-npx react-native run-android
+npx react-native start --reset-cache
 ```
 
-The Android emulator accesses the local FastAPI backend through:
+### 5. Build and run the Android application
+
+Open another terminal and run:
+
+```powershell
+npx react-native run-android --active-arch-only
+```
+
+The Android emulator accesses the FastAPI backend using:
 
 ```text
 http://10.0.2.2:8000
 ```
+
+`10.0.2.2` is the Android emulator's special address for accessing the host computer.
 
 ## API Endpoints
 
@@ -230,19 +278,19 @@ http://10.0.2.2:8000
 |---|---|---|
 | POST | `/auth/register` | Register a customer or provider |
 | POST | `/auth/login` | Log in and receive a JWT |
-| GET | `/auth/me` | Return the logged-in user |
+| GET | `/auth/me` | Return the authenticated user |
 
 ### Provider Services
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/services` | Add a provider vehicle |
-| GET | `/services/my-services` | Return the provider's vehicles |
-| GET | `/services/available` | Search available vehicles |
+| POST | `/services` | Add a provider vehicle service |
+| GET | `/services/my-services` | Return the provider's vehicle services |
+| GET | `/services/available` | Search available vehicle services |
 
-Available vehicles can be filtered by type:
+Available services can be filtered by type:
 
-```text
+```http
 GET /services/available?service_type=CAB
 ```
 
@@ -251,7 +299,7 @@ GET /services/available?service_type=CAB
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/bookings` | Create a pending booking |
-| GET | `/bookings/my-bookings` | Return the customer's bookings |
+| GET | `/bookings/my-bookings` | Return bookings available to the authenticated user |
 
 ### Location and Routing
 
@@ -259,7 +307,7 @@ GET /services/available?service_type=CAB
 |---|---|---|
 | GET | `/geocode` | Convert an address into coordinates |
 | GET | `/reverse-geocode` | Convert coordinates into an address |
-| GET | `/route` | Calculate a driving route |
+| GET | `/route` | Calculate a driving route, distance, and duration |
 
 ## Example Booking Request
 
@@ -286,30 +334,53 @@ Example response:
 }
 ```
 
+## Map and Routing Flow
+
+1. React Native requests location permission.
+2. Device GPS provides the user's coordinates.
+3. Nominatim converts coordinates into a readable address.
+4. The user searches for a destination.
+5. Nominatim converts the destination into coordinates.
+6. FastAPI sends the coordinates to OSRM.
+7. OSRM returns route coordinates, distance, and duration.
+8. React Native Maps displays the route using a polyline.
+
+The public OSRM service does not include real-time traffic conditions.
+
+## Weather Flow
+
+1. The application reads the user's GPS coordinates or a searched city.
+2. The coordinates are sent to Open-Meteo.
+3. Open-Meteo returns current conditions and a five-day forecast.
+4. The application displays temperature, feels-like temperature, humidity, wind speed, rain probability, and forecast data.
+
 ## Future Improvements
 
-- Calculate the estimated fare using route distance
+- Calculate estimated fares using actual route distance
 - Provider booking acceptance and rejection
 - Customer booking cancellation
 - Reviews and provider ratings
 - Push notifications
+- Automated backend and frontend tests
 - Cloud deployment
-- Automated testing
 - AI-powered travel recommendations
 
 ## What I Learned
 
 While building TravelMate, I learned how to:
 
-- Connect a React Native application to FastAPI
-- Design REST APIs
-- Store application data in MySQL
+- Build a mobile application using React Native
+- Connect React Native to a FastAPI backend
+- Design and consume REST APIs
+- Store relational application data in MySQL
 - Use SQLAlchemy models and relationships
-- Manage database changes using Alembic
-- Implement JWT authentication
+- Manage database changes using Alembic migrations
+- Implement JWT authentication and password hashing
 - Apply role-based authorization
-- Integrate third-party mapping and routing APIs
-- Build an end-to-end customer and provider workflow
+- Store mobile session data using AsyncStorage
+- Integrate device geolocation
+- Integrate mapping, geocoding, routing, and weather services
+- Build an end-to-end customer and provider booking workflow
 
 ## Author
 
